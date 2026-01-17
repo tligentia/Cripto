@@ -5,7 +5,7 @@ import {
   ChevronRight, Wallet, PieChart, LineChart, 
   ArrowUpRight, ArrowDownRight, Loader2, Calendar, 
   DollarSign, RefreshCw, AlertCircle, Layers, X, Edit3, Search, Zap, Globe, Info, Activity, AlertTriangle,
-  List, LayoutGrid, MessageSquare
+  List, LayoutGrid, MessageSquare, ArrowRightLeft, ArrowRight
 } from 'lucide-react';
 import { Portfolio, PortfolioAsset, CurrencyCode, AssetType } from '../types';
 import { fetchAssetData, resolveAsset, fetchPriceAtDate } from '../services/market';
@@ -58,6 +58,10 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
   const [isAddingAsset, setIsAddingAsset] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [isAddingPortfolio, setIsAddingPortfolio] = useState(false);
+  
+  // Transfer state
+  const [isTransferMode, setIsTransferMode] = useState(false);
+  const [targetPortfolioId, setTargetPortfolioId] = useState<string>('');
 
   const [newAsset, setNewAsset] = useState({ 
     symbol: '', 
@@ -143,16 +147,23 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
   }, [activePortfolio, valuationData]);
 
   const formatInputNumber = (val: string) => {
-    const cleanValue = val.replace(/[^\d,]/g, '');
-    const parts = cleanValue.split(',');
+    const isNegative = val.startsWith('-');
+    const digitsOnly = val.replace(/[^\d,]/g, '');
+    if (!digitsOnly && isNegative) return '-';
+    if (!digitsOnly) return '';
+    
+    const parts = digitsOnly.split(',');
     if (parts.length > 2) return val;
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    return parts.join(',');
+    return (isNegative ? '-' : '') + parts.join(',');
   };
 
   const parseToNumber = (val: string): number => {
-    if (!val) return 0;
-    return parseFloat(val.replace(/\./g, '').replace(',', '.'));
+    if (!val || val === '-') return 0;
+    const isNegative = val.startsWith('-');
+    const clean = val.replace(/-/g, '').replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(clean);
+    return isNegative ? -num : num;
   };
 
   const handleAddPortfolio = (e: React.FormEvent) => {
@@ -202,7 +213,47 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
     setIsLoading(true);
     const resolved = await resolveAsset(newAsset.symbol);
     if (resolved) {
-        if (editingAssetId) {
+        const amountNum = parseToNumber(newAsset.amount);
+        const priceNum = parseToNumber(newAsset.price);
+
+        if (isTransferMode) {
+          if (!targetPortfolioId) {
+            alert("Selecciona una cartera de destino para el traspaso.");
+            setIsLoading(false);
+            return;
+          }
+          
+          // Crear Salida (Negativo) en Origen
+          const exitAsset: PortfolioAsset = {
+            id: Math.random().toString(36).substr(2, 9),
+            symbol: resolved.symbol,
+            name: resolved.name,
+            type: resolved.type || 'CRYPTO',
+            amount: -Math.abs(amountNum),
+            purchasePrice: priceNum,
+            purchaseDate: newAsset.date,
+            comments: `Traspaso (Salida) hacia ${portfolios.find(p => p.id === targetPortfolioId)?.name}. ${newAsset.comments}`
+          };
+
+          // Crear Entrada (Positivo) en Destino
+          const entryAsset: PortfolioAsset = {
+            id: Math.random().toString(36).substr(2, 9),
+            symbol: resolved.symbol,
+            name: resolved.name,
+            type: resolved.type || 'CRYPTO',
+            amount: Math.abs(amountNum),
+            purchasePrice: priceNum,
+            purchaseDate: newAsset.date,
+            comments: `Traspaso (Entrada) desde ${portfolios.find(p => p.id === activePortfolioId)?.name}. ${newAsset.comments}`
+          };
+
+          setPortfolios(portfolios.map(p => {
+            if (p.id === activePortfolioId) return { ...p, assets: [exitAsset, ...p.assets] };
+            if (p.id === targetPortfolioId) return { ...p, assets: [entryAsset, ...p.assets] };
+            return p;
+          }));
+
+        } else if (editingAssetId) {
             setPortfolios(portfolios.map(p => {
                 if (p.assets.some(a => a.id === editingAssetId)) {
                     return {
@@ -212,8 +263,8 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                             symbol: resolved.symbol,
                             name: resolved.name,
                             type: resolved.type || 'CRYPTO',
-                            amount: parseToNumber(newAsset.amount),
-                            purchasePrice: parseToNumber(newAsset.price),
+                            amount: amountNum,
+                            purchasePrice: priceNum,
                             purchaseDate: newAsset.date,
                             comments: newAsset.comments
                         } : a)
@@ -227,15 +278,18 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                 symbol: resolved.symbol,
                 name: resolved.name,
                 type: resolved.type || 'CRYPTO',
-                amount: parseToNumber(newAsset.amount),
-                purchasePrice: parseToNumber(newAsset.price),
+                amount: amountNum,
+                purchasePrice: priceNum,
                 purchaseDate: newAsset.date,
                 comments: newAsset.comments
             };
             setPortfolios(portfolios.map(p => p.id === activePortfolioId ? { ...p, assets: [asset, ...p.assets] } : p));
         }
+        
         setIsAddingAsset(false);
         setEditingAssetId(null);
+        setIsTransferMode(false);
+        setTargetPortfolioId('');
         setNewAsset({ symbol: '', amount: '', price: '', date: new Date().toISOString().split('T')[0], type: 'CRYPTO', comments: '' });
     }
     setIsLoading(false);
@@ -251,6 +305,7 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
         type: asset.type || 'CRYPTO',
         comments: asset.comments || ''
     });
+    setIsTransferMode(false);
     setIsAddingAsset(true);
   };
 
@@ -402,7 +457,7 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
 
                       {!isTotalView && (
                         <button 
-                          onClick={() => { setEditingAssetId(null); setIsAddingAsset(true); }}
+                          onClick={() => { setEditingAssetId(null); setIsTransferMode(false); setIsAddingAsset(true); }}
                           className="bg-gray-900 hover:bg-black text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all active:scale-95"
                         >
                             <Plus size={16} /> Añadir Activo
@@ -456,7 +511,9 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-1.5 font-mono font-bold text-gray-700 text-[11px]">{asset.amount.toLocaleString('es-ES')}</td>
+                                            <td className={`px-4 py-1.5 font-mono font-bold text-[11px] ${asset.amount < 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                                                {asset.amount.toLocaleString('es-ES')}
+                                            </td>
                                             <td className="px-4 py-1.5"><span className="font-mono font-black text-gray-900 text-xs">{curSym}{formatPrice(value)}</span></td>
                                             <td className="px-4 py-1.5">
                                                 <div className={`inline-flex items-center gap-1 font-black text-[11px] ${isPos ? 'text-green-600' : 'text-red-600'}`}>
@@ -538,7 +595,7 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                                         <div className="grid grid-cols-2 gap-1.5 py-0.5 border-b border-gray-50">
                                             <div className="flex flex-col">
                                                 <div className="text-[7px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Cantidad</div>
-                                                <div className="font-mono font-bold text-gray-700 text-[9px] truncate leading-none">
+                                                <div className={`font-mono font-bold text-[9px] truncate leading-none ${asset.amount < 0 ? 'text-red-600' : 'text-gray-700'}`}>
                                                     {asset.amount.toLocaleString('es-ES')}
                                                 </div>
                                             </div>
@@ -619,15 +676,19 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                   <div className="p-8 border-b border-gray-100 flex justify-between items-start bg-white">
                       <div className="flex items-center gap-5">
                           <div className="p-4 bg-red-700 text-white rounded-2xl shadow-xl shadow-red-700/20">
-                            {editingAssetId ? <Edit3 size={28} strokeWidth={3} /> : <Plus size={28} strokeWidth={3} />}
+                            {isTransferMode ? <ArrowRightLeft size={28} strokeWidth={3} /> : editingAssetId ? <Edit3 size={28} strokeWidth={3} /> : <Plus size={28} strokeWidth={3} />}
                           </div>
                           <div>
-                            <h3 className="font-black text-gray-900 text-2xl uppercase tracking-tighter leading-none">{editingAssetId ? 'Editar Activo' : 'Añadir Activo'}</h3>
-                            <p className="text-[10px] text-gray-400 font-black uppercase mt-2 tracking-widest">Cartera: <span className="text-gray-900">{activePortfolio?.name}</span></p>
+                            <h3 className="font-black text-gray-900 text-2xl uppercase tracking-tighter leading-none">
+                                {isTransferMode ? 'Realizar Traspaso' : editingAssetId ? 'Editar Activo' : 'Añadir Activo'}
+                            </h3>
+                            <p className="text-[10px] text-gray-400 font-black uppercase mt-2 tracking-widest">
+                                Cartera Origen: <span className="text-gray-900">{activePortfolio?.name}</span>
+                            </p>
                           </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {editingAssetId && (
+                        {editingAssetId && !isTransferMode && (
                             <button 
                                 onClick={() => removeAsset(editingAssetId)} 
                                 className="p-2 hover:bg-red-50 rounded-full text-gray-300 hover:text-red-700 transition-all group"
@@ -636,7 +697,7 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                                 <Trash2 size={28} />
                             </button>
                         )}
-                        <button onClick={() => { setIsAddingAsset(false); setEditingAssetId(null); }} className="p-2 hover:bg-gray-50 rounded-full text-gray-300 hover:text-red-700 transition-all"><X size={28} /></button>
+                        <button onClick={() => { setIsAddingAsset(false); setEditingAssetId(null); setIsTransferMode(false); }} className="p-2 hover:bg-gray-50 rounded-full text-gray-300 hover:text-red-700 transition-all"><X size={28} /></button>
                       </div>
                   </div>
                   <form onSubmit={handleAddAsset} className="p-8 md:p-10 space-y-8">
@@ -650,9 +711,29 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                           </div>
                           <div className="space-y-2">
                               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cantidad</label>
-                              <input required type="text" inputMode="decimal" value={newAsset.amount} onChange={(e) => setNewAsset({...newAsset, amount: formatInputNumber(e.target.value)})} placeholder="0,00" className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-base font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 focus:bg-white outline-none transition-all shadow-sm" />
+                              <input required type="text" inputMode="decimal" value={newAsset.amount} onChange={(e) => setNewAsset({...newAsset, amount: formatInputNumber(e.target.value)})} placeholder="Ej: 10,5 o -5,0 (Salida)" className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-base font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 focus:bg-white outline-none transition-all shadow-sm" />
                           </div>
                       </div>
+                      
+                      {isTransferMode && (
+                        <div className="space-y-2 animate-in slide-in-from-top-4">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <ArrowRight size={14} className="text-red-700" /> Cartera de Destino
+                            </label>
+                            <select 
+                                required
+                                value={targetPortfolioId}
+                                onChange={(e) => setTargetPortfolioId(e.target.value)}
+                                className="w-full bg-red-50 border border-red-100 p-4 rounded-2xl text-sm font-black text-red-900 outline-none focus:ring-4 focus:ring-red-700/10 transition-all shadow-inner"
+                            >
+                                <option value="" disabled>Seleccionar Cartera Destino...</option>
+                                {portfolios.filter(p => p.id !== activePortfolioId).map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha Operación</label>
@@ -689,8 +770,17 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                       </div>
 
                       <div className="flex flex-col md:flex-row gap-4">
-                        <button disabled={isLoading} type="submit" className="flex-1 bg-gray-900 hover:bg-black text-white py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] transition-all shadow-xl active:scale-[0.98] mt-4 flex items-center justify-center gap-4 group">
-                            {isLoading ? <Loader2 className="animate-spin" size={24} /> : <>{editingAssetId ? 'Actualizar Registro' : 'Registrar Posición'}</>}
+                        <button 
+                            type="button"
+                            onClick={() => setIsTransferMode(!isTransferMode)}
+                            className={`flex-1 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 border-2 ${isTransferMode ? 'bg-white border-red-700 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-400 hover:text-gray-900 hover:border-gray-900 shadow-sm'}`}
+                        >
+                            <ArrowRightLeft size={20} /> {isTransferMode ? 'Modo Traspaso Activo' : 'Hacer un Traspaso'}
+                        </button>
+                        <button disabled={isLoading} type="submit" className="flex-1 bg-gray-900 hover:bg-black text-white py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 group">
+                            {isLoading ? <Loader2 className="animate-spin" size={24} /> : (
+                                <>{isTransferMode ? 'Ejecutar Traspaso' : editingAssetId ? 'Actualizar Registro' : 'Registrar Posición'}</>
+                            )}
                         </button>
                       </div>
                   </form>
