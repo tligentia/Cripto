@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutGrid, Inbox, ArrowUpRight, Loader2 } from 'lucide-react';
 import { AUTHORIZED_DOMAIN } from './Parameters';
@@ -12,7 +13,8 @@ export interface AppItem {
 
 // --- CONSTANTS ---
 const SHEET_ID = '1wJkM8rmiXCrnB0K4h9jtme0m7f5I3y1j1PX5nmEaTII';
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+// Cambiamos a la URL de exportación directa que es más fiable que gviz/tq para CSV simple
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 
 // --- UTILS ---
 const isValidUrl = (urlString: string): boolean => {
@@ -56,9 +58,19 @@ const getInitials = (name: string) => {
 
 const fetchAppData = async (): Promise<AppItem[]> => {
   try {
-    const response = await fetch(CSV_URL);
-    if (!response.ok) throw new Error('Error al cargar datos');
-    const text = await response.text();
+    // Intentar fetch directo primero, con fallback a proxy por si hay CORS
+    let text = '';
+    try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error();
+        text = await response.text();
+    } catch (e) {
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(CSV_URL)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('Error al cargar datos vía proxy');
+        text = await response.text();
+    }
+
     const rows = text.split(/\r?\n/).filter(line => line.trim() !== '');
     if (rows.length < 2) return [];
 
@@ -137,7 +149,7 @@ export const AppMenu: React.FC = () => {
         <div className="relative flex items-center justify-center">
             <LayoutGrid size={16} className={`transition-transform duration-500 ${isOpen ? 'rotate-90 text-red-500' : 'text-gray-400 group-hover:text-gray-900'}`} />
         </div>
-        <span className="text-[10px] uppercase tracking-widest">APP</span>
+        <span className="text-[10px] uppercase tracking-widest hidden sm:inline">APP</span>
         {!loading && filteredApps.length > 0 && (
           <span className={`px-1.5 py-0.5 text-[9px] rounded-md font-black transition-colors ${
             isOpen ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-900 group-hover:text-white'

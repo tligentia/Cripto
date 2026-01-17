@@ -92,7 +92,7 @@ export const Shell: React.FC<ShellProps> = ({
               >
                   <div className="flex items-center gap-2">
                       <span className="text-red-700 font-black text-sm">{CURRENCIES[currency].symbol}</span>
-                      <span className="text-[11px] font-black uppercase tracking-widest text-gray-900">{currency}</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest text-gray-900 hidden sm:inline">{currency}</span>
                   </div>
                   <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isCurrencyMenuOpen ? 'rotate-180' : ''}`} />
               </button>

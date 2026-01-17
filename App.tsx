@@ -285,7 +285,7 @@ export default function App() {
                     { id: 'dashboard', label: 'Análisis', icon: BrainCircuit },
                     { id: 'correlation', label: 'Correlación', icon: Sparkles },
                     { id: 'portfolio', label: 'Cartera', icon: Briefcase },
-                    { id: 'guia', label: 'Guía DeFi', icon: BrainCircuit }
+                    { id: 'guia', label: 'Guía', icon: BrainCircuit }
                 ].map(tab => (
                     <button 
                       key={tab.id}
