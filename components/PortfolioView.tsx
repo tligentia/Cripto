@@ -5,7 +5,7 @@ import {
   ChevronRight, Wallet, PieChart, LineChart, 
   ArrowUpRight, ArrowDownRight, Loader2, Calendar, 
   DollarSign, RefreshCw, AlertCircle, Layers, X, Edit3, Search, Zap, Globe, Info, Activity, AlertTriangle,
-  List, LayoutGrid, MessageSquare, ArrowRightLeft, ArrowRight
+  List, LayoutGrid, MessageSquare, ArrowRightLeft, ArrowRight, Check
 } from 'lucide-react';
 import { Portfolio, PortfolioAsset, CurrencyCode, AssetType } from '../types';
 import { fetchAssetData, resolveAsset, fetchPriceAtDate } from '../services/market';
@@ -716,21 +716,44 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                       </div>
                       
                       {isTransferMode && (
-                        <div className="space-y-2 animate-in slide-in-from-top-4">
+                        <div className="space-y-4 animate-in slide-in-from-top-4">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <ArrowRight size={14} className="text-red-700" /> Cartera de Destino
                             </label>
-                            <select 
-                                required
-                                value={targetPortfolioId}
-                                onChange={(e) => setTargetPortfolioId(e.target.value)}
-                                className="w-full bg-red-50 border border-red-100 p-4 rounded-2xl text-sm font-black text-red-900 outline-none focus:ring-4 focus:ring-red-700/10 transition-all shadow-inner"
-                            >
-                                <option value="" disabled>Seleccionar Cartera Destino...</option>
+                            
+                            <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
                                 {portfolios.filter(p => p.id !== activePortfolioId).map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                    <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() => setTargetPortfolioId(p.id)}
+                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all text-left group ${targetPortfolioId === p.id ? 'bg-red-50 border-red-700 shadow-md ring-1 ring-red-700/20' : 'bg-white border-gray-100 hover:border-red-200 hover:bg-gray-50'}`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2.5 rounded-xl transition-colors ${targetPortfolioId === p.id ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-400 group-hover:text-red-700'}`}>
+                                                <Wallet size={18} />
+                                            </div>
+                                            <div>
+                                                <div className={`font-black text-sm uppercase tracking-tight ${targetPortfolioId === p.id ? 'text-red-900' : 'text-gray-900'}`}>{p.name}</div>
+                                                {p.description && (
+                                                    <div className="text-[10px] text-gray-400 font-medium line-clamp-1 italic mt-0.5">{p.description}</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {targetPortfolioId === p.id && (
+                                            <div className="text-red-700 animate-in zoom-in">
+                                                <Check size={20} strokeWidth={3} />
+                                            </div>
+                                        )}
+                                    </button>
                                 ))}
-                            </select>
+                            </div>
+                            
+                            {portfolios.filter(p => p.id !== activePortfolioId).length === 0 && (
+                                <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-2xl text-center text-[10px] font-bold text-gray-400 uppercase">
+                                    No hay otras carteras disponibles para traspaso
+                                </div>
+                            )}
                         </div>
                       )}
 
