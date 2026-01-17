@@ -278,21 +278,23 @@ export default function App() {
       <div className="space-y-8 pb-20">
         
         {/* Navegación Global */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-10">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 mb-10">
             <div className="flex bg-gray-100 p-1 rounded-xl w-fit shadow-inner border border-gray-200/50">
                 {[
-                    { id: 'overview', label: 'Resumen', icon: LayoutGrid },
-                    { id: 'dashboard', label: 'Análisis', icon: BrainCircuit },
-                    { id: 'correlation', label: 'Correlación', icon: Sparkles },
-                    { id: 'portfolio', label: 'Cartera', icon: Briefcase },
-                    { id: 'guia', label: 'Guía', icon: BrainCircuit }
+                    { id: 'overview', label: 'Resumen', short: 'Res.', icon: LayoutGrid },
+                    { id: 'dashboard', label: 'Análisis', short: 'Anál.', icon: BrainCircuit },
+                    { id: 'correlation', label: 'Correlación', short: 'Corr.', icon: Sparkles },
+                    { id: 'portfolio', label: 'Cartera', short: 'Cart.', icon: Briefcase },
+                    { id: 'guia', label: 'Guía', short: 'Guía', icon: BrainCircuit }
                 ].map(tab => (
                     <button 
                       key={tab.id}
                       onClick={() => setView(tab.id as any)}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${view === tab.id ? 'bg-white text-red-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      className={`flex items-center gap-1 md:gap-2 px-2 md:px-5 py-2.5 rounded-lg text-[10px] md:text-[11px] font-black uppercase tracking-tight md:tracking-widest transition-all ${view === tab.id ? 'bg-white text-red-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                      <tab.icon size={14} /> {tab.label}
+                      <tab.icon size={14} className="flex-shrink-0" /> 
+                      <span className="hidden md:inline">{tab.label}</span>
+                      <span className="inline md:hidden">{tab.short}</span>
                     </button>
                 ))}
             </div>

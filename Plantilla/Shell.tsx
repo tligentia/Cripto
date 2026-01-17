@@ -48,26 +48,26 @@ export const Shell: React.FC<ShellProps> = ({
   }, []);
 
   return (
-    <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-4 md:p-8`}>
+    <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-3 md:p-8`}>
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-white mb-8 border-b border-gray-200 pb-6 pt-4 flex justify-between items-center">
+      <header className="sticky top-0 z-50 bg-white mb-6 md:mb-8 border-b border-gray-200 pb-4 md:pb-6 pt-2 md:pt-4 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-gray-900 flex items-center gap-2">
-            <BarChart3 className="text-red-700" size={32} />
+          <h1 className="text-2xl md:text-3xl font-black tracking-tighter text-gray-900 flex items-center gap-1.5 md:gap-2">
+            <BarChart3 className="text-red-700" size={28} />
             Cripto <span className="text-red-700">GO</span>
           </h1>
-          <div className="flex items-center gap-4 mt-1">
+          <div className="flex items-center gap-4 mt-0.5 md:mt-1">
             <div className="flex items-center">
               {isKeyValid === true ? (
-                <span className="flex items-center gap-1 text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-50 px-2 py-0.5 rounded-md border border-green-100 animate-in fade-in zoom-in">
+                <span className="flex items-center gap-1 text-[8px] md:text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-50 px-1.5 md:px-2 py-0.5 rounded-md border border-green-100 animate-in fade-in zoom-in">
                   <CheckCircle2 size={10} /> AI ONLINE
                 </span>
               ) : isKeyValid === false ? (
-                <span className="flex items-center gap-1 text-[9px] font-black text-red-700 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-md border border-red-100 animate-pulse cursor-help" title="Configuración requerida">
+                <span className="flex items-center gap-1 text-[8px] md:text-[9px] font-black text-red-700 uppercase tracking-widest bg-red-50 px-1.5 md:px-2 py-0.5 rounded-md border border-red-100 animate-pulse cursor-help" title="Configuración requerida">
                   <AlertCircle size={10} /> AI OFFLINE
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">
+                <span className="flex items-center gap-1 text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-1.5 md:px-2 py-0.5 rounded-md">
                   <Sparkles size={10} className="animate-spin" /> SYNCING
                 </span>
               )}
@@ -75,10 +75,10 @@ export const Shell: React.FC<ShellProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <button 
             onClick={() => setShowManual(true)}
-            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 px-4 py-2 rounded-xl transition-all active:scale-95 group shadow-sm"
+            className="flex items-center gap-1.5 md:gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 px-2.5 sm:px-4 py-2 rounded-xl transition-all active:scale-95 group shadow-sm"
           >
             <HelpCircle size={18} className="text-red-700 group-hover:scale-110 transition-transform" />
             <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Manual</span>
@@ -88,9 +88,9 @@ export const Shell: React.FC<ShellProps> = ({
           <div className="relative" ref={currencyMenuRef}>
               <button
                   onClick={() => setIsCurrencyMenuOpen(!isCurrencyMenuOpen)}
-                  className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-2 rounded-xl shadow-sm hover:border-red-700 transition-all group h-[42px]"
+                  className="flex items-center gap-1.5 md:gap-3 bg-white border border-gray-200 px-2.5 sm:px-4 py-2 rounded-xl shadow-sm hover:border-red-700 transition-all group h-[42px]"
               >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 md:gap-2">
                       <span className="text-red-700 font-black text-sm">{CURRENCIES[currency].symbol}</span>
                       <span className="text-[11px] font-black uppercase tracking-widest text-gray-900 hidden sm:inline">{currency}</span>
                   </div>

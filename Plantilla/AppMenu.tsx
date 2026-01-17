@@ -140,7 +140,7 @@ export const AppMenu: React.FC = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 font-bold focus:outline-none group ${
+        className={`flex items-center space-x-1.5 md:space-x-2 px-2 sm:px-4 py-2 rounded-xl transition-all duration-300 font-bold focus:outline-none group ${
           isOpen 
             ? 'bg-gray-900 text-white shadow-lg shadow-black/10' 
             : 'bg-white text-gray-900 border border-gray-100 hover:border-gray-900'
@@ -151,7 +151,7 @@ export const AppMenu: React.FC = () => {
         </div>
         <span className="text-[10px] uppercase tracking-widest hidden sm:inline">APP</span>
         {!loading && filteredApps.length > 0 && (
-          <span className={`px-1.5 py-0.5 text-[9px] rounded-md font-black transition-colors ${
+          <span className={`px-1 md:px-1.5 py-0.5 text-[8px] md:text-[9px] rounded-md font-black transition-colors ${
             isOpen ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-900 group-hover:text-white'
           }`}>
             {filteredApps.length}
