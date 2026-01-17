@@ -19,6 +19,7 @@ export interface PortfolioAsset extends Asset {
   amount: number;
   purchasePrice: number;
   purchaseDate: string;
+  expenses: number; // Nuevo campo para gastos/comisiones
   currentPrice?: number;
   value?: number;
   pnl?: number;
