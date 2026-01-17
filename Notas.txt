@@ -1,0 +1,24 @@
+Version COntrol
+
+Implementar solicitud de la APIKey
+
+Implementados a verificar:
+-----------------------------
+Añadir en index.html antes de cierre de html
+  </body>
+  <script type="module" src="index.tsx"></script
+</html>
+
+Eliminar referencias a Power4
+
+Revisar llamada a graficos TradingView en bolsa
+
+Mejorar el selector de moneda
+
+Añadir favicon e icon
+
+
+Revisados:
+-----------------------------
+
+Comprobador 
