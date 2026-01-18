@@ -16,7 +16,8 @@ import PortfolioView from './components/PortfolioView';
 import { Guia } from './components/Guia';
 import { 
   Loader2, Search, Plus, BrainCircuit, Sparkles, 
-  AlertCircle, LayoutGrid, Briefcase, LucideIcon 
+  AlertCircle, LayoutGrid, Briefcase, LucideIcon,
+  CheckCircle2, ArrowRight, X, Info
 } from 'lucide-react';
 
 export default function App() {
@@ -24,7 +25,6 @@ export default function App() {
   const [userIp, setUserIp] = useState<string | null>(null);
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
   
-  // Persistencia de la vista actual
   const [view, setView] = useState<'overview' | 'dashboard' | 'correlation' | 'portfolio' | 'guia'>(() => {
     const savedView = localStorage.getItem('app_current_view');
     return (savedView as any) || 'overview';
@@ -54,11 +54,9 @@ export default function App() {
     return (saved as AssetType) || 'CRYPTO';
   });
 
-  // Assets initialization
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isAssetsLoaded, setIsAssetsLoaded] = useState(false);
 
-  // Redirection state for portfolio
   const [pendingPortfolioAsset, setPendingPortfolioAsset] = useState<{symbol: string, type: AssetType} | null>(null);
 
   useEffect(() => {
@@ -94,10 +92,10 @@ export default function App() {
   const [newSymbol, setNewSymbol] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
   const [aiSuggestionData, setAiSuggestionData] = useState<{symbol: string, reason: string, label: string} | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [foundAssetPreview, setFoundAssetPreview] = useState<Asset | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync rates on startup and manual refresh
   useEffect(() => {
       const getRates = async () => {
           const freshRates = await fetchExchangeRates();
@@ -138,7 +136,6 @@ export default function App() {
     }
   }, [view]);
 
-  // CRITICAL: Disable auto-refresh in Analysis and Correlation views
   useEffect(() => {
     if (!autoRefresh || view === 'dashboard' || view === 'correlation' || view === 'portfolio') return;
     
@@ -213,17 +210,18 @@ export default function App() {
                .sort((a, b) => (a.isFavorite === b.isFavorite ? 0 : a.isFavorite ? -1 : 1));
   }, [assets, marketMode, favorites, view]);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleSearchAsset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSymbol || isAdding) return;
-    setIsAdding(true);
+    if (!newSymbol || isSearching) return;
+    setIsSearching(true);
     setAddError(null);
+    setFoundAssetPreview(null);
     
     let targetSymbol = newSymbol.trim();
     if (['?', '?+', '?++', '?-'].includes(targetSymbol)) {
         if (!isKeyValid) {
             setAddError("Configura una API Key válida en Ajustes.");
-            setIsAdding(false);
+            setIsSearching(false);
             return;
         }
         try {
@@ -238,27 +236,36 @@ export default function App() {
             setAiSuggestionData({ ...suggestion, label });
         } catch {
             setAddError("Error en la Búsqueda Inteligente.");
-            setIsAdding(false);
+            setIsSearching(false);
             return;
         }
     }
 
     const foundAsset = await resolveAsset(targetSymbol);
     if (foundAsset) {
-        if (assets.some(a => a.symbol === foundAsset.symbol)) {
-            setScrollToSymbol(foundAsset.symbol);
-            if (view !== 'dashboard') setView('dashboard');
-            setNewSymbol('');
-        } else {
-            setAssets(prev => [foundAsset, ...prev]);
-            setScrollToSymbol(foundAsset.symbol);
-            if (view !== 'dashboard') setView('dashboard');
-            setNewSymbol('');
-        }
+        setFoundAssetPreview(foundAsset);
     } else {
         setAddError(`No se encontró "${targetSymbol}".`);
     }
-    setIsAdding(false);
+    setIsSearching(false);
+  };
+
+  const handleConfirmAdd = () => {
+    if (!foundAssetPreview) return;
+    
+    const isAlreadyInList = assets.some(a => a.symbol === foundAssetPreview.symbol);
+    
+    if (isAlreadyInList) {
+        setScrollToSymbol(foundAssetPreview.symbol);
+        if (view !== 'dashboard') setView('dashboard');
+    } else {
+        setAssets(prev => [foundAssetPreview, ...prev]);
+        setScrollToSymbol(foundAssetPreview.symbol);
+        if (view !== 'dashboard') setView('dashboard');
+    }
+    
+    setNewSymbol('');
+    setFoundAssetPreview(null);
   };
 
   const [showAjustes, setShowAjustes] = useState(false);
@@ -340,27 +347,76 @@ export default function App() {
                         </div>
                     </div>
                     <div className="lg:col-span-8 bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-center min-h-[180px]">
-                        <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-                            <form onSubmit={handleAdd} className="flex-1 w-full flex gap-4 items-end">
-                                <div className="flex-1 space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Terminal de Búsqueda</label>
-                                    <div className="relative">
-                                        <input 
-                                            ref={inputRef}
-                                            type="text" 
-                                            value={newSymbol} 
-                                            onChange={(e) => setNewSymbol(e.target.value)}
-                                            placeholder="Símbolo o '?', '?+', '?++', '?-' para IA"
-                                            className="w-full bg-gray-50 border border-gray-200 p-3.5 pl-11 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-red-700/20 outline-none transition-all"
-                                        />
-                                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                        <div className="space-y-2 mb-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Terminal de Búsqueda</label>
+                        </div>
+                        <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
+                            <div className="flex-1 w-full flex flex-col gap-2">
+                                <form onSubmit={handleSearchAsset} className="flex gap-4 items-start">
+                                    <div className="flex-1">
+                                        <div className="relative">
+                                            <input 
+                                                ref={inputRef}
+                                                type="text" 
+                                                value={newSymbol} 
+                                                onChange={(e) => {
+                                                    setNewSymbol(e.target.value);
+                                                    if (!e.target.value) setFoundAssetPreview(null);
+                                                }}
+                                                placeholder="Símbolo o '?', '?+', '?++', '?-' para IA"
+                                                className="w-full bg-gray-50 border border-gray-200 p-3.5 pl-11 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-red-700/20 outline-none transition-all"
+                                            />
+                                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                                            {newSymbol && (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {setNewSymbol(''); setFoundAssetPreview(null);}}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-700 transition-colors"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                <button type="submit" disabled={isAdding} className="bg-gray-900 hover:bg-black text-white px-8 h-[52px] rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50">
-                                    {isAdding ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-                                </button>
-                            </form>
-                            <div className="flex bg-gray-900 p-1.5 rounded-2xl h-fit">
+                                    <button type="submit" disabled={isSearching || !newSymbol} className="bg-gray-900 hover:bg-black text-white px-8 h-[52px] rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                                        {isSearching ? <Loader2 className="animate-spin" size={20} /> : <Search size={20} />}
+                                    </button>
+                                </form>
+                                
+                                {/* PREVISUALIZACIÓN DE ACTIVO IDENTIFICADO */}
+                                {foundAssetPreview && (
+                                    <div className="mt-2 animate-in slide-in-from-top-2 fade-in duration-300">
+                                        <div className="flex items-center justify-between p-4 bg-gray-900 text-white rounded-2xl shadow-xl border-l-4 border-red-700">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-black text-xs text-red-500">
+                                                    {foundAssetPreview.symbol.slice(0, 2)}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-black uppercase tracking-tight">{foundAssetPreview.name}</span>
+                                                        <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">{foundAssetPreview.symbol}</span>
+                                                    </div>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5 flex items-center gap-1.5">
+                                                        <Info size={10} />
+                                                        Identificado en {foundAssetPreview.type === 'STOCK' ? 'Yahoo Finance (Bolsa)' : 'Binance (Cripto)'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={handleConfirmAdd}
+                                                className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-red-900/20"
+                                            >
+                                                {assets.some(a => a.symbol === foundAssetPreview.symbol) ? (
+                                                    <><ArrowRight size={14} strokeWidth={3} /> Ir al Activo</>
+                                                ) : (
+                                                    <><CheckCircle2 size={14} strokeWidth={3} /> Confirmar y Añadir</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex bg-gray-900 p-1.5 rounded-2xl h-fit ml-0 md:ml-4">
                                 <button onClick={() => setMarketMode('CRYPTO')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${marketMode === 'CRYPTO' ? 'bg-white text-gray-900' : 'text-gray-400 hover:text-white'}`}>Cripto</button>
                                 <button onClick={() => setMarketMode('STOCK')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${marketMode === 'STOCK' ? 'bg-white text-gray-900' : 'text-gray-400 hover:text-white'}`}>Bolsa</button>
                             </div>

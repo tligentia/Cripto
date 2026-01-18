@@ -92,11 +92,16 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
       if (activePortfolioId === TOTAL_PORTFOLIO_ID) {
           setActivePortfolioId(portfolios[0].id);
       }
-      setNewAsset(prev => ({ 
-        ...prev, 
+      // Limpiamos campos de valores anteriores al entrar por redirección pero manteniendo el ticker
+      setNewAsset({ 
         symbol: initialAssetData.symbol, 
-        type: initialAssetData.type 
-      }));
+        amount: '', 
+        price: '', 
+        expenses: '', 
+        date: new Date().toISOString().split('T')[0], 
+        type: initialAssetData.type,
+        comments: ''
+      });
       setEditingAssetId(null);
       setIsAddingAsset(true);
       onHandledInitialSymbol?.();
@@ -191,6 +196,20 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
     const pnlPct = (totalCost + totalExpenses) > 0 ? (pnl / (totalCost + totalExpenses)) * 100 : 0;
     return { total: totalValue, cost: totalCost, pnl, pnlPct, expenses: totalExpenses };
   }, [activePortfolio, valuationData]);
+
+  // Función para formatear con alta precisión (al menos 8 cifras significativas en total)
+  const formatHighPrecision = (val: number) => {
+    if (val === 0) return "0";
+    // Determinamos cuántos decimales necesitamos para tener al menos 8 cifras significativas
+    // Si val > 1, necesitamos menos decimales. Si val < 1, necesitamos más.
+    const magnitude = Math.floor(Math.log10(Math.abs(val)));
+    const decimalsNeeded = Math.max(0, 8 - magnitude);
+    
+    return new Intl.NumberFormat('es-ES', { 
+      minimumFractionDigits: Math.min(decimalsNeeded, 2), 
+      maximumFractionDigits: Math.max(decimalsNeeded, 8) 
+    }).format(val);
+  };
 
   const formatInputNumber = (val: string) => {
     const isNegative = val.startsWith('-');
@@ -319,9 +338,9 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
     setEditingAssetId(asset.id);
     setNewAsset({
         symbol: asset.symbol,
-        amount: new Intl.NumberFormat('es-ES').format(asset.amount),
-        price: new Intl.NumberFormat('es-ES').format(asset.purchasePrice),
-        expenses: asset.expenses ? new Intl.NumberFormat('es-ES').format(asset.expenses) : '',
+        amount: formatHighPrecision(asset.amount),
+        price: formatHighPrecision(asset.purchasePrice),
+        expenses: asset.expenses ? formatHighPrecision(asset.expenses) : '',
         date: asset.purchaseDate,
         type: asset.type || 'CRYPTO',
         comments: asset.comments || ''
@@ -336,7 +355,8 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
     try {
       const price = await fetchPriceAtDate(newAsset.symbol, newAsset.type, newAsset.date);
       if (price !== null) {
-        setNewAsset(prev => ({ ...prev, price: new Intl.NumberFormat('es-ES').format(price) }));
+        // Utilizamos alta precisión para el seteo del precio histórico
+        setNewAsset(prev => ({ ...prev, price: formatHighPrecision(price) }));
       }
     } catch (e) {
       console.error("Historical Price Error", e);
@@ -452,7 +472,13 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
                           </div>
 
                           {!isTotalView && (
-                            <button onClick={() => { setEditingAssetId(null); setIsTransferMode(false); setIsAddingAsset(true); }} className="bg-gray-900 hover:bg-black text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                            <button onClick={() => { 
+                                setEditingAssetId(null); 
+                                setIsTransferMode(false); 
+                                // Limpiamos campos antes de abrir el modal para asegurar que está vacío
+                                setNewAsset({ symbol: '', amount: '', price: '', expenses: '', date: new Date().toISOString().split('T')[0], type: 'CRYPTO', comments: '' });
+                                setIsAddingAsset(true); 
+                            }} className="bg-gray-900 hover:bg-black text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all active:scale-95">
                                 <Plus size={16} /> Añadir Activo
                             </button>
                           )}
