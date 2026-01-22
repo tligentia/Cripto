@@ -1,16 +1,24 @@
 {
-  "name": "cripto-go",
-  "version": "1.0.0",
-  "description": "Dashboard de análisis técnico profesional para criptomonedas y bolsa con integración de IA.",
-  "main": "index.tsx",
-  "dependencies": {
-    "lodash": "^4.17.21"
-  },
-  "overrides": {
-    "lodash": "^4.17.21"
-  },
+  "name": "cripto-go-✅",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
+    "dev": "vite",
     "build": "vite build",
-    "dev": "vite"
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.33.0",
+    "lucide-react": "^0.561.0",
+    "react-dom": "^19.2.3",
+    "react": "^19.2.3",
+    "recharts": "2.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }
