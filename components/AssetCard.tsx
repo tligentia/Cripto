@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Trash2, Calendar, CalendarDays, CalendarRange, Sparkles, Users, LineChart, Loader2, Zap, ArrowUpToLine, ArrowDownToLine, ChevronLeft, ChevronRight, X, Building2, Lock, Star, Activity, Waves, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { RefreshCw, Trash2, Calendar, CalendarDays, CalendarRange, Sparkles, Users, LineChart, Loader2, Zap, ArrowUpToLine, ArrowDownToLine, ChevronLeft, ChevronRight, X, Building2, Lock, Star, Activity, Waves, TrendingUp, TrendingDown, Wallet, LayoutGrid as LayoutGridIcon } from 'lucide-react';
 import { Asset, MarketData, TimeframeAnalysis, CurrencyCode, Pivots, FibonacciLevels, AssetType } from '../types';
 import { CURRENCIES } from '../constants';
 import { fetchAssetData } from '../services/market';
@@ -165,6 +165,7 @@ const AssetCard: React.FC<Props> = ({ asset, onDelete, onToggleFavorite, refresh
   const [matrixLoading, setMatrixLoading] = useState(false);
   const [showProfiles, setShowProfiles] = useState(false);
   const [showChart, setShowChart] = useState(false);
+  const [chartStyle, setChartStyle] = useState<"1" | "8">("1"); // 1=Velas, 8=Heiken Ashi
   const [showFundamental, setShowFundamental] = useState(false); 
   const [showMA20, setShowMA20] = useState(false);
   const [rsiModalData, setRsiModalData] = useState<{value: number, timeframe: string} | null>(null);
@@ -240,6 +241,11 @@ const AssetCard: React.FC<Props> = ({ asset, onDelete, onToggleFavorite, refresh
       setFibModalData({ levels, timeframe: label });
   };
 
+  const handleOpenChart = (style: "1" | "8") => {
+    setChartStyle(style);
+    setShowChart(true);
+  };
+
   if (loading) return <div id={`asset-card-${asset.symbol}`} className="p-6 rounded-lg border border-gray-200 bg-white animate-pulse h-64" />;
   if (error || !data) return <div id={`asset-card-${asset.symbol}`} className="p-4 rounded-lg border border-red-200 bg-red-50 flex justify-between items-center"><span className="font-bold text-red-900">{asset.symbol} - Error de datos</span><button onClick={() => onDelete(asset.symbol)} className="text-red-700 hover:bg-red-100 p-2 rounded-lg transition-colors"><Trash2 size={18} /></button></div>;
 
@@ -283,9 +289,14 @@ const AssetCard: React.FC<Props> = ({ asset, onDelete, onToggleFavorite, refresh
         <div className={`flex justify-between items-end ${isLarge ? 'mb-4' : 'mb-2'}`}>
            <p className={`${isLarge ? 'text-base md:text-lg' : 'text-[10px]'} font-black text-gray-400 uppercase tracking-[0.2em]`}>Multi-Timeframe</p>
            {!isLarge && (
-             <button onClick={(e) => { e.stopPropagation(); setShowChart(true); }} className="text-[10px] flex items-center gap-1 text-gray-900 hover:text-black font-black bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200 shadow-sm transition-all active:scale-95">
-                <LineChart size={10} className="text-red-700"/> GRÁFICO
-             </button>
+             <div className="flex gap-1">
+               <button onClick={(e) => { e.stopPropagation(); handleOpenChart("1"); }} className="text-[9px] flex items-center gap-1 text-gray-900 hover:text-black font-black bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200 shadow-sm transition-all active:scale-95 uppercase">
+                  <LineChart size={10} className="text-red-700"/> Velas
+               </button>
+               <button onClick={(e) => { e.stopPropagation(); handleOpenChart("8"); }} className="text-[9px] flex items-center gap-1 text-gray-900 hover:text-black font-black bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200 shadow-sm transition-all active:scale-95 uppercase">
+                  <Zap size={10} className="text-red-700"/> Heiken
+               </button>
+             </div>
            )}
         </div>
         
@@ -410,7 +421,7 @@ const AssetCard: React.FC<Props> = ({ asset, onDelete, onToggleFavorite, refresh
 
       {showFundamental && <FundamentalModal asset={asset} apiKey={apiKey} onClose={() => setShowFundamental(false)} />}
       {showProfiles && <ProfilesModal symbol={asset.symbol} apiKey={apiKey} rsiValue={daily?.rsi} onClose={() => setShowProfiles(false)} />}
-      {showChart && <ChartModal symbol={asset.symbol} type={asset.type || 'CRYPTO'} onClose={() => setShowChart(false)} />}
+      {showChart && <ChartModal symbol={asset.symbol} type={asset.type || 'CRYPTO'} style={chartStyle} onClose={() => setShowChart(false)} />}
       {showMA20 && <MA20Modal symbol={asset.symbol} price={daily.price} ma20={daily.ma20} onClose={() => setShowMA20(false)} />}
       {rsiModalData && <RSIModal symbol={asset.symbol} value={rsiModalData.value} timeframe={rsiModalData.timeframe} onClose={() => setRsiModalData(null)} />}
       {pivotsModalData && <PivotsModal symbol={asset.symbol} timeframe={pivotsModalData.timeframe} pivots={pivotsModalData.pivots} price={daily.price} onClose={() => setPivotsModalData(null)} />}
