@@ -5,7 +5,7 @@ import {
   ChevronRight, Wallet, PieChart, LineChart, 
   ArrowUpRight, ArrowDownRight, Loader2, Calendar, 
   DollarSign, RefreshCw, AlertCircle, Layers, X, Edit3, Search, Zap, Globe, Info, Activity, AlertTriangle,
-  List, LayoutGrid, MessageSquare, ArrowRightLeft, ArrowRight, Check, Download, SortAsc, SortDesc
+  List, LayoutGrid, MessageSquare, ArrowRightLeft, ArrowRight, Check, Download, SortAsc, SortDesc, ChevronDown
 } from 'lucide-react';
 import { Portfolio, PortfolioAsset, CurrencyCode, AssetType } from '../types';
 import { fetchAssetData, resolveAsset, fetchPriceAtDate } from '../services/market';
@@ -631,100 +631,118 @@ export default function PortfolioView({ currency, rate, initialAssetData, onHand
       {isAddingAsset && (
           <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
               <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95">
-                  <div className="p-4 border-b border-gray-100 flex justify-between items-start bg-white">
-                      <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-red-700 text-white rounded-xl shadow-lg">
-                            {isTransferMode ? <ArrowRightLeft size={18} strokeWidth={3} /> : editingAssetId ? <Edit3 size={18} strokeWidth={3} /> : <Plus size={18} strokeWidth={3} />}
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-white">
+                      <div className="flex items-center gap-4">
+                          <div className="p-3 bg-red-700 text-white rounded-xl shadow-lg">
+                            {isTransferMode ? <ArrowRightLeft size={22} strokeWidth={3} /> : editingAssetId ? <Edit3 size={22} strokeWidth={3} /> : <Plus size={22} strokeWidth={3} />}
                           </div>
                           <div>
-                            <h3 className="font-black text-gray-900 text-base uppercase tracking-tighter leading-none">{isTransferMode ? 'Traspaso de Activos' : editingAssetId ? 'Editar Posición' : 'Nueva Posición'}</h3>
-                            <p className="text-[8px] text-gray-400 font-black uppercase mt-1 tracking-widest">Cartera Origen: <span className="text-gray-900">{activePortfolio?.name}</span></p>
+                            <h3 className="font-black text-gray-900 text-xl uppercase tracking-tighter leading-none">{isTransferMode ? 'Traspaso de Activos' : editingAssetId ? 'Editar Posición' : 'Nueva Posición'}</h3>
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Cartera Origen:</span>
+                                {editingAssetId || isTransferMode ? (
+                                    <span className="text-[9px] text-red-700 font-black uppercase tracking-widest">{activePortfolio?.name}</span>
+                                ) : (
+                                    <div className="relative inline-flex items-center group">
+                                        <select 
+                                            value={activePortfolioId || ''} 
+                                            onChange={(e) => setActivePortfolioId(e.target.value)}
+                                            className="text-[9px] text-red-700 font-black uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded border border-gray-100 outline-none appearance-none cursor-pointer pr-5 transition-all hover:bg-red-50 hover:border-red-200"
+                                        >
+                                            {portfolios.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown size={10} className="absolute right-1 text-red-400 pointer-events-none" />
+                                    </div>
+                                )}
+                            </div>
                           </div>
                       </div>
-                      <button onClick={() => { setIsAddingAsset(false); setEditingAssetId(null); setIsTransferMode(false); }} className="p-2 hover:bg-gray-50 rounded-full text-gray-300 hover:text-red-700 transition-all"><X size={18} /></button>
+                      <button onClick={() => { setIsAddingAsset(false); setEditingAssetId(null); setIsTransferMode(false); }} className="p-2 hover:bg-gray-50 rounded-full text-gray-300 hover:text-red-700 transition-all"><X size={20} /></button>
                   </div>
-                  <form onSubmit={handleAddAsset} className="p-5 space-y-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
-                      <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Ticker</label>
+                  <form onSubmit={handleAddAsset} className="p-6 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ticker</label>
                               <div className="relative group">
-                                  <input required type="text" value={newAsset.symbol} onChange={(e) => setNewAsset({...newAsset, symbol: e.target.value.toUpperCase()})} placeholder="BTC, NVDA..." className="w-full bg-gray-50 border border-gray-200 p-2.5 pl-8 rounded-xl text-xs font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all uppercase" />
-                                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-300" />
+                                  <input required type="text" value={newAsset.symbol} onChange={(e) => setNewAsset({...newAsset, symbol: e.target.value.toUpperCase()})} placeholder="BTC, NVDA..." className="w-full bg-gray-50 border border-gray-200 p-3 pl-9 rounded-xl text-sm font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all uppercase" />
+                                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
                               </div>
                           </div>
-                          <div className="space-y-1">
-                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Cantidad</label>
-                              <input required type="text" inputMode="decimal" value={newAsset.amount} onChange={(e) => setNewAsset({...newAsset, amount: formatInputNumber(e.target.value)})} placeholder="Ej: 0.5" className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl text-xs font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all" />
+                          <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cantidad</label>
+                              <input required type="text" inputMode="decimal" value={newAsset.amount} onChange={(e) => setNewAsset({...newAsset, amount: formatInputNumber(e.target.value)})} placeholder="Ej: 0.5" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all" />
                           </div>
                       </div>
 
                       {isTransferMode && (
-                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl space-y-3 animate-in slide-in-from-top-2">
-                            <label className="text-[9px] font-black text-red-700 uppercase tracking-widest ml-1 flex items-center gap-2">
+                        <div className="p-4 bg-gray-50 border border-gray-200 rounded-3xl space-y-3 animate-in slide-in-from-top-2">
+                            <label className="text-[10px] font-black text-red-700 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <ArrowRight size={12} /> Cartera de Destino
                             </label>
-                            <div className="grid grid-cols-1 gap-1.5 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                            <div className="grid grid-cols-1 gap-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
                                 {portfolios.filter(p => p.id !== activePortfolioId).map(p => (
                                     <button
                                         key={p.id}
                                         type="button"
                                         onClick={() => setTargetPortfolioId(p.id)}
-                                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-left group ${targetPortfolioId === p.id ? 'bg-white border-red-700 shadow-sm ring-1 ring-red-700/20' : 'bg-white border-gray-100 hover:border-red-200'}`}
+                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${targetPortfolioId === p.id ? 'bg-white border-red-700 shadow-sm ring-1 ring-red-700/20' : 'bg-white border-gray-100 hover:border-red-200'}`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-1.5 rounded-lg ${targetPortfolioId === p.id ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                                                <Wallet size={12} />
+                                            <div className={`p-2 rounded-lg ${targetPortfolioId === p.id ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                                <Wallet size={14} />
                                             </div>
-                                            <span className={`text-[10px] font-black uppercase tracking-tight ${targetPortfolioId === p.id ? 'text-red-900' : 'text-gray-900'}`}>{p.name}</span>
+                                            <span className={`text-xs font-black uppercase tracking-tight ${targetPortfolioId === p.id ? 'text-red-900' : 'text-gray-900'}`}>{p.name}</span>
                                         </div>
-                                        {targetPortfolioId === p.id && <Check size={14} className="text-red-700" strokeWidth={3} />}
+                                        {targetPortfolioId === p.id && <Check size={16} className="text-red-700" strokeWidth={3} />}
                                     </button>
                                 ))}
                                 {portfolios.length <= 1 && (
                                     <div className="py-4 text-center">
-                                        <p className="text-[8px] font-bold text-gray-400 uppercase italic">Debes crear otra cartera para realizar traspasos</p>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase italic">Debes crear otra cartera para realizar traspasos</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                       )}
                       
-                      <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Precio USD</label>
-                              <div className="relative flex items-center gap-1.5">
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Precio USD</label>
+                              <div className="relative flex items-center gap-2">
                                 <div className="relative flex-1">
-                                    <input required type="text" inputMode="decimal" value={newAsset.price} onChange={(e) => setNewAsset({...newAsset, price: formatInputNumber(e.target.value)})} placeholder="0,00" className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl text-xs font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all" />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 font-black text-[8px] uppercase">USD</div>
+                                    <input required type="text" inputMode="decimal" value={newAsset.price} onChange={(e) => setNewAsset({...newAsset, price: formatInputNumber(e.target.value)})} placeholder="0,00" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all" />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 font-black text-[9px] uppercase">USD</div>
                                 </div>
-                                <button type="button" onClick={handleGetHistoricalPrice} disabled={isFetchingHistorical} className="p-2.5 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 transition-all text-red-700 shadow-sm">{isFetchingHistorical ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}</button>
+                                <button type="button" onClick={handleGetHistoricalPrice} disabled={isFetchingHistorical} className="p-3 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 transition-all text-red-700 shadow-sm">{isFetchingHistorical ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}</button>
                               </div>
                           </div>
-                          <div className="space-y-1">
-                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Gastos / Comis.</label>
+                          <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Gastos / Comis.</label>
                               <div className="relative">
-                                  <input type="text" inputMode="decimal" value={newAsset.expenses} onChange={(e) => setNewAsset({...newAsset, expenses: formatInputNumber(e.target.value)})} placeholder="0,00" className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl text-xs font-black text-red-700 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all shadow-sm" />
-                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 font-black text-[8px] uppercase">USD</div>
+                                  <input type="text" inputMode="decimal" value={newAsset.expenses} onChange={(e) => setNewAsset({...newAsset, expenses: formatInputNumber(e.target.value)})} placeholder="0,00" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-black text-red-700 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all shadow-sm" />
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 font-black text-[9px] uppercase">USD</div>
                               </div>
                           </div>
                       </div>
 
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha Operación</label>
-                          <input required type="date" value={newAsset.date} onChange={(e) => setNewAsset({...newAsset, date: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl text-xs font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all" />
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha Operación</label>
+                          <input required type="date" value={newAsset.date} onChange={(e) => setNewAsset({...newAsset, date: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm font-black text-gray-900 focus:ring-4 focus:ring-red-700/5 focus:border-red-700 outline-none transition-all" />
                       </div>
 
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Comentarios</label>
-                          <textarea value={newAsset.comments} onChange={(e) => setNewAsset({...newAsset, comments: e.target.value})} placeholder="Notas..." className="w-full bg-gray-50 border border-gray-200 p-2.5 rounded-xl text-[10px] font-bold focus:ring-4 focus:ring-red-700/5 outline-none transition-all min-h-[50px] resize-none" />
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Comentarios</label>
+                          <textarea value={newAsset.comments} onChange={(e) => setNewAsset({...newAsset, comments: e.target.value})} placeholder="Notas..." className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-xs font-bold focus:ring-4 focus:ring-red-700/5 outline-none transition-all min-h-[60px] resize-none" />
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                        <button type="button" onClick={() => setIsTransferMode(!isTransferMode)} className={`flex-1 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${isTransferMode ? 'bg-red-700 border-red-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-400 hover:text-gray-900 hover:border-gray-900 shadow-sm'}`}>
-                            <ArrowRightLeft size={14} /> {isTransferMode ? 'Modo Alta' : 'Traspaso'}
+                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button type="button" onClick={() => setIsTransferMode(!isTransferMode)} className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${isTransferMode ? 'bg-red-700 border-red-700 text-white shadow-lg' : 'bg-gray-50 border-gray-200 text-gray-400 hover:text-gray-900 hover:border-gray-900 shadow-sm'}`}>
+                            <ArrowRightLeft size={16} /> {isTransferMode ? 'Modo Alta' : 'Traspaso'}
                         </button>
-                        <button disabled={isLoading || (isTransferMode && !targetPortfolioId)} type="submit" className="flex-1 bg-gray-900 hover:bg-black text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-30">
-                            {isLoading ? <Loader2 className="animate-spin" size={14} /> : (
+                        <button disabled={isLoading || (isTransferMode && !targetPortfolioId)} type="submit" className="flex-1 bg-gray-900 hover:bg-black text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-30">
+                            {isLoading ? <Loader2 className="animate-spin" size={18} /> : (
                                 <>{isTransferMode ? 'Ejecutar Traspaso' : editingAssetId ? 'Guardar Cambios' : 'Registrar Posición'}</>
                             )}
                         </button>
